@@ -15,8 +15,8 @@ training_set_scaled = sc.fit_transform(training_set)
 #Creating a data structure with 60 timesteps and 1 output
 X_train = []
 y_train = []
-for i in range(60,4218):
-    X_train.append(training_set_scaled[i-60:i, 0])
+for i in range(120,4218):
+    X_train.append(training_set_scaled[i-120:i, 0])
     y_train.append(training_set_scaled[i, 0])
 
 X_train, y_train = np.array(X_train), np.array(y_train)
@@ -38,7 +38,7 @@ regressor = Sequential()
 regressor.add(LSTM(units = 100, return_sequences= True, input_shape = (X_train.shape[1],1)))
 regressor.add(Dropout(0.2))
 
-#Adding 3 more layers
+#Adding more layers
 #2
 regressor.add(LSTM(units = 100, return_sequences= True))
 regressor.add(Dropout(0.2))
@@ -49,6 +49,10 @@ regressor.add(Dropout(0.2))
 regressor.add(LSTM(units = 100, return_sequences= True))
 regressor.add(Dropout(0.2))
 #5
+regressor.add(LSTM(units = 100, return_sequences= True))
+regressor.add(Dropout(0.2))
+
+#6
 regressor.add(LSTM(units = 100, return_sequences= True))
 regressor.add(Dropout(0.2))
 
@@ -63,8 +67,17 @@ regressor.add(Dense(units = 1))
 regressor.compile(optimizer='adam', loss='mean_squared_error')
 
 #Fitting the RNN model to the training set
-regressor.fit(X_train, y_train, epochs=500, batch_size=32)
+history = regressor.fit(X_train, y_train, validation_split=0.2,epochs=500, batch_size=64)
 
+print(history.history.keys())
+
+plt.plot(history.history['loss'], color='red', label='Loss')
+plt.title('Training Loss')
+plt.xlabel('Time')
+plt.ylabel('Loss')
+plt.legend()
+plt.savefig('Loss.jpg',bbox_inches='tight',dpi=1000)
+plt.show()
 
 #Reading test dataset
 #dataset_test = pd.read_csv('Google_Stock_Price_Test.csv')
@@ -72,12 +85,12 @@ real_stock_price = dataset.iloc[-20:,1:2].values
 
 #Predicting stock price
 #dataset_local = pd.concat((dataset_train['Open'], dataset_test['Open']), axis = 0)
-inputs = dataset.iloc[len(training_set)-80:,1:2].values
+inputs = dataset.iloc[len(training_set)-140:,1:2].values
 inputs = inputs.reshape(-1,1)
 inputs_scaled = sc.transform(inputs)
 X_test = []
-for i in range(60,80):
-    X_test.append(inputs_scaled[i-60:i, 0])
+for i in range(120,140):
+    X_test.append(inputs_scaled[i-120:i, 0])
 X_test = np.array(X_test)
 X_test = np.reshape(X_test,(X_test.shape[0], X_test.shape[1], 1))
 predicted_stock_price = regressor.predict(X_test)
